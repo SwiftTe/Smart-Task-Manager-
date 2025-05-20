@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns:fx="http://javafx.com/fxml" fx:controller="src.controller.DashboardController">
+    <children>
+        <Label layoutX="50" layoutY="50" fx:id="welcomeLabel" text="Welcome!" style="-fx-font-size: 18px;" />
+    </children>
+</AnchorPane>
