@@ -9,6 +9,7 @@ import src.database.DBConnector;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class AuthController {
@@ -24,30 +25,50 @@ public class AuthController {
         alert.showAndWait();
     }
 
+    // ✅ Updated handleLogin
     public void handleLogin() {
         String username = usernameField.getText();
         String password = passwordField.getText();
 
         if (username.isEmpty() || password.isEmpty()) {
-            showAlert(Alert.AlertType.ERROR, "Please enter both username and password.");
+            showAlert(Alert.AlertType.ERROR, "Please fill all fields.");
             return;
         }
 
-        try (Connection conn = DBConnector.getConnection();
-             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE username = ? AND password = ?")) {
+        try (Connection conn = DBConnector.getConnection()) {
+            String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
+            PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, username);
-            stmt.setString(2, password); // In real projects, compare with hashed password!
-            java.sql.ResultSet rs = stmt.executeQuery();
+            stmt.setString(2, password); // ⚠️ Note: Use hashing in real-world apps
+            ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                showAlert(Alert.AlertType.INFORMATION, "Login successful!");
-                // TODO: Load main application window
+                openDashboard(username);
             } else {
-                showAlert(Alert.AlertType.ERROR, "Invalid username or password.");
+                showAlert(Alert.AlertType.ERROR, "Invalid credentials. Try again.");
             }
-        } catch (SQLException e) {
+
+        } catch (Exception e) {
             e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Database error during login.");
+            showAlert(Alert.AlertType.ERROR, "Something went wrong.");
+        }
+    }
+
+    // ✅ New openDashboard method
+    private void openDashboard(String username) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/Dashboard.fxml"));
+            Scene scene = new Scene(loader.load());
+
+            // Inject username to dashboard
+            src.controller.DashboardController controller = loader.getController();
+            controller.setUsername(username);
+
+            Stage stage = (Stage) usernameField.getScene().getWindow();
+            stage.setScene(scene);
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Failed to load Dashboard.");
         }
     }
 
@@ -63,7 +84,7 @@ public class AuthController {
         try (Connection conn = DBConnector.getConnection();
              PreparedStatement stmt = conn.prepareStatement("INSERT INTO users(username, password) VALUES(?, ?)")) {
             stmt.setString(1, username);
-            stmt.setString(2, password); // In real projects, encrypt passwords!
+            stmt.setString(2, password); // ⚠️ Hash passwords in production!
             stmt.executeUpdate();
             showAlert(Alert.AlertType.INFORMATION, "User registered successfully! Please log in.");
             backToLogin();
